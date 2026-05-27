@@ -58,10 +58,6 @@ $timer.Add_Tick({
         $g.DrawImage($bitmap,$dstRect,$srcRect,[System.Drawing.GraphicsUnit]::Pixel)
     }
 
-    if ($rand.NextDouble() -lt 0.05) {
-        # Removed GetPixel/SetPixel loop for performance
-    }
-
     $form.Invalidate()
 })
 
@@ -72,10 +68,10 @@ $form.Add_Paint({
 
 $form.Add_Resize({
     if ($form.ClientSize.Width -gt 0 -and $form.ClientSize.Height -gt 0) {
-        $g.Dispose()
-        $bitmap.Dispose()
-        $bitmap = New-Object System.Drawing.Bitmap($form.ClientSize.Width,$form.ClientSize.Height)
-        $g = [System.Drawing.Graphics]::FromImage($bitmap)
+        $script:g.Dispose()
+        $script:bitmap.Dispose()
+        $script:bitmap = New-Object System.Drawing.Bitmap($form.ClientSize.Width,$form.ClientSize.Height)
+        $script:g = [System.Drawing.Graphics]::FromImage($script:bitmap)
         $g.Clear([System.Drawing.Color]::Black)
     }
 })
@@ -100,7 +96,5 @@ try {
 } catch {
     Write-Host "Stopped at $([math]::Round($totalWritten/1GB, 2)) GB — $_"
 } finally {
-    if ($stream) {
-        $stream.Close()
-    }
+    if ($stream) { $stream.Close() }
 }
